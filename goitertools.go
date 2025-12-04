@@ -13,3 +13,18 @@ func Cycle[T any](items []T) <-chan T {
 
 	return ch
 }
+
+func Count(start, step int) <-chan int {
+	ch := make(chan int)
+
+	go func() {
+
+		i := start
+		for {
+			i += step
+			ch <- i
+		}
+	}()
+
+	return ch
+}
