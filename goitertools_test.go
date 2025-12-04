@@ -45,7 +45,7 @@ func TestCount(t *testing.T) {
 		}
 	}
 
-	expected := []int{0 + step, 0 + step*2, 0 + step*3, 0 + step*4, 0 + step*5}
+	expected := []int{0, 0 + step, 0 + step*2, 0 + step*3, 0 + step*4}
 	for i := range expected {
 		if got[i] != expected[i] {
 			t.Fatalf("Count output mismatch at index %d: got %d, want %d", i, got[i], expected[i])
