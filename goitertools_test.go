@@ -91,3 +91,20 @@ func TestFilter(t *testing.T) {
 		t.Fatalf("got %v, want %v", got, expected)
 	}
 }
+
+func TestFilterFalse(t *testing.T) {
+	items := []int{11, 15, 2, 20, 5}
+	condition := func(val, _ int) bool { return val%2 == 0 }
+	ch := goitertools.FilterFalse(items, condition)
+
+	got := []int{}
+	for val := range ch {
+		got = append(got, val)
+	}
+
+	expected := []int{11, 15, 5}
+
+	if !reflect.DeepEqual(got, expected) {
+		t.Fatalf("got %v, want %v", got, expected)
+	}
+}
