@@ -56,10 +56,10 @@ func TestCount(t *testing.T) {
 func TestRepeat(t *testing.T) {
 	val := 0
 	times := 4
-	ch := goitertools.Count(val, times)
+	ch := goitertools.Repeat(val, times)
 
-	got := make([]int, 0, 5)
-	for i := 0; i < 5; i++ {
+	got := make([]int, 0, times)
+	for i := 0; i < times; i++ {
 		select {
 		case val := <-ch:
 			got = append(got, val)
