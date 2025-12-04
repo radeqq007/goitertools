@@ -1,6 +1,7 @@
 package goitertools_test
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -49,5 +50,27 @@ func TestCount(t *testing.T) {
 		if got[i] != expected[i] {
 			t.Fatalf("Count output mismatch at index %d: got %d, want %d", i, got[i], expected[i])
 		}
+	}
+}
+
+func TestRepeat(t *testing.T) {
+	val := 0
+	times := 4
+	ch := goitertools.Count(val, times)
+
+	got := make([]int, 0, 5)
+	for i := 0; i < 5; i++ {
+		select {
+		case val := <-ch:
+			got = append(got, val)
+		case <-time.After(time.Second):
+			t.Fatal("Repeat channel timed out")
+		}
+	}
+
+	expected := []int{0, 0, 0, 0}
+
+	if !reflect.DeepEqual(got, expected) {
+		t.Fatalf("got %v, want %v", got, expected)
 	}
 }
