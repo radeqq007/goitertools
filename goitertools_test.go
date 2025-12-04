@@ -74,3 +74,20 @@ func TestRepeat(t *testing.T) {
 		t.Fatalf("got %v, want %v", got, expected)
 	}
 }
+
+func TestFilter(t *testing.T) {
+	items := []int{10, 15, 2, 20, 5}
+	condition := func(val, _ int) bool { return val%2 == 0 }
+	ch := goitertools.Filter(items, condition)
+
+	got := []int{}
+	for val := range ch {
+		got = append(got, val)
+	}
+
+	expected := []int{10, 2, 20}
+
+	if !reflect.DeepEqual(got, expected) {
+		t.Fatalf("got %v, want %v", got, expected)
+	}
+}
