@@ -20,8 +20,8 @@ func Count(start, step int) <-chan int {
 	go func() {
 		i := start
 		for {
-			i += step
 			ch <- i
+			i += step
 		}
 	}()
 
