@@ -129,3 +129,24 @@ func TestChain(t *testing.T) {
 		t.Fatalf("got %v, want %v", got, expected)
 	}
 }
+
+func TestChainFromSlice(t *testing.T) {
+	slices := [][]int{
+		{10, 2},
+		{5, 1},
+		{3, 1, 6},
+	}
+
+	ch := goitertools.ChainFromSlice(slices)
+
+	got := []int{}
+	for val := range ch {
+		got = append(got, val)
+	}
+
+	expected := []int{10, 2, 5, 1, 3, 1, 6}
+
+	if !reflect.DeepEqual(got, expected) {
+		t.Fatalf("got %v, want %v", got, expected)
+	}
+}

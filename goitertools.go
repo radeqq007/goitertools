@@ -88,3 +88,17 @@ func Chain[T any](slices ...[]T) <-chan T {
 
 	return ch
 }
+
+func ChainFromSlice[T any](slices [][]T) <-chan T {
+	ch := make(chan T)
+	go func() {
+		defer close(ch)
+		for _, slice := range slices {
+			for _, val := range slice {
+				ch <- val
+			}
+		}
+	}()
+
+	return ch
+}
