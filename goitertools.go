@@ -18,11 +18,28 @@ func Count(start, step int) <-chan int {
 	ch := make(chan int)
 
 	go func() {
-
 		i := start
 		for {
 			i += step
 			ch <- i
+		}
+	}()
+
+	return ch
+}
+
+func Repeat[T any](value T, times int) <-chan T {
+	ch := make(chan T)
+	go func() {
+		if times == -1 {
+			for {
+				ch <- value
+			}
+		} else {
+			for i := 0; i < times; i++ {
+				ch <- value
+			}
+			close(ch)
 		}
 	}()
 
