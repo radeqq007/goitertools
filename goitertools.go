@@ -59,3 +59,17 @@ func Filter[T any](items []T, condition func(T, int) bool) <-chan T {
 	}()
 	return ch
 }
+
+func FilterFalse[T any](items []T, condition func(T, int) bool) <-chan T {
+	ch := make(chan T)
+	go func() {
+		defer close(ch)
+
+		for i, val := range items {
+			if !condition(val, i) {
+				ch <- val
+			}
+		}
+	}()
+	return ch
+}
