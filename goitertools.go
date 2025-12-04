@@ -73,3 +73,18 @@ func FilterFalse[T any](items []T, condition func(T, int) bool) <-chan T {
 	}()
 	return ch
 }
+
+func Chain[T any](slices ...[]T) <-chan T {
+	ch := make(chan T)
+
+	go func() {
+		defer close(ch)
+		for _, slice := range slices {
+			for _, val := range slice {
+				ch <- val
+			}
+		}
+	}()
+
+	return ch
+}
