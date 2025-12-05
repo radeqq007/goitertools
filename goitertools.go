@@ -93,6 +93,25 @@ func Compress[T any](items []T, selectors []bool) <-chan T {
 	return ch
 }
 
+func DropWhile[T any](items []T, condition func(T, int) bool) <-chan T {
+	ch := make(chan T)
+	go func() {
+		defer close(ch)
+
+		dropping := true
+		for i, val := range items {
+			if dropping && condition(val, i) {
+				continue
+			} else {
+				dropping = false
+				ch <- val
+			}
+		}
+	}()
+
+	return ch
+}
+
 func Chain[T any](slices ...[]T) <-chan T {
 	ch := make(chan T)
 

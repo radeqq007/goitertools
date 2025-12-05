@@ -125,6 +125,22 @@ func TestCompress(t *testing.T) {
 	}
 }
 
+func TestDropWhile(t *testing.T) {
+	items := []int{1, 3, 5, 2, 4, 6}
+	condition := func(val, _ int) bool { return val < 4 }
+	ch := goitertools.DropWhile(items, condition)
+	
+	got := []int{}
+	for val := range ch {
+		got = append(got, val)
+	}
+	
+	expected := []int{5, 2, 4, 6}
+	if !reflect.DeepEqual(got, expected) {
+		t.Fatalf("got %v, want %v", got, expected)
+	}
+}
+
 func TestChain(t *testing.T) {
 	slices := [][]int{
 		{10, 2},
