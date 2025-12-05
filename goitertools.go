@@ -112,6 +112,22 @@ func DropWhile[T any](items []T, condition func(T, int) bool) <-chan T {
 	return ch
 }
 
+func TakeWhile[T any](items []T, condition func(T, int) bool) <-chan T {
+	ch := make(chan T)
+	go func() {
+		defer close(ch)
+		
+		for i, val := range items {
+			if condition(val, i) {
+				ch <- val
+			} else {
+				break
+			}
+		}
+	}()
+	return ch
+}
+
 func Chain[T any](slices ...[]T) <-chan T {
 	ch := make(chan T)
 

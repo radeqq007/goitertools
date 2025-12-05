@@ -141,6 +141,22 @@ func TestDropWhile(t *testing.T) {
 	}
 }
 
+func TestTakeWhile(t *testing.T) {
+	items := []int{2, 4, 6, 1, 4, 5}
+	condition := func(val, _ int) bool { return val%2 == 0 }
+	ch := goitertools.TakeWhile(items, condition)
+	
+	got := []int{}
+	for val := range ch {
+		got = append(got, val)
+	}
+	
+	expected := []int{2, 4, 6}
+	if !reflect.DeepEqual(got, expected) {
+		t.Fatalf("got %v, want %v", got, expected)
+	}
+}
+
 func TestChain(t *testing.T) {
 	slices := [][]int{
 		{10, 2},
