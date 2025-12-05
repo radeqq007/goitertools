@@ -74,6 +74,25 @@ func FilterFalse[T any](items []T, condition func(T, int) bool) <-chan T {
 	return ch
 }
 
+func Compress[T any](items []T, selectors []bool) <-chan T {
+	ch := make(chan T)
+	go func() {
+		defer close(ch)
+		
+		minLen := len(items)
+		if len(selectors) < minLen {
+			minLen = len(selectors)
+		}
+		
+		for i := 0; i < minLen; i++ {
+			if selectors[i] {
+				ch <- items[i]
+			}
+		}
+	}()
+	return ch
+}
+
 func Chain[T any](slices ...[]T) <-chan T {
 	ch := make(chan T)
 

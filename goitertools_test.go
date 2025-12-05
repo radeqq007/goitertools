@@ -109,6 +109,22 @@ func TestFilterFalse(t *testing.T) {
 	}
 }
 
+func TestCompress(t *testing.T) {
+	data := []int{10, 20, 30, 40, 50}
+	selectors := []bool{true, false, true, false, true}
+	ch := goitertools.Compress(data, selectors)
+	
+	got := []int{}
+	for val := range ch {
+		got = append(got, val)
+	}
+	
+	expected := []int{10, 30, 50}
+	if !reflect.DeepEqual(got, expected) {
+		t.Fatalf("got %v, want %v", got, expected)
+	}
+}
+
 func TestChain(t *testing.T) {
 	slices := [][]int{
 		{10, 2},
