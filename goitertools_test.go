@@ -1,6 +1,7 @@
 package goitertools_test
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
@@ -10,7 +11,9 @@ import (
 
 func TestCycle(t *testing.T) {
 	items := []int{1, 2, 3}
-	ch := goitertools.Cycle(items)
+	ctx, cancel := context.WithCancel(context.Background())
+	ch := goitertools.Cycle(ctx, items)
+	defer cancel()
 
 	got := make([]int, 0, 6)
 	for range 6 {
@@ -20,6 +23,7 @@ func TestCycle(t *testing.T) {
 		case <-time.After(time.Second):
 			t.Fatal("Cycle channel timed out")
 		}
+
 	}
 
 	expected := []int{1, 2, 3, 1, 2, 3}
@@ -33,7 +37,9 @@ func TestCycle(t *testing.T) {
 func TestCount(t *testing.T) {
 	start := 0
 	step := 2
-	ch := goitertools.Count(start, step)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() 
+	ch := goitertools.Count(ctx, start, step)
 
 	got := make([]int, 0, 5)
 	for i := 0; i < 5; i++ {
@@ -56,8 +62,11 @@ func TestCount(t *testing.T) {
 func TestRepeat(t *testing.T) {
 	val := 0
 	times := 4
-	ch := goitertools.Repeat(val, times)
+	ctx, cancel := context.WithCancel(context.Background())
+	ch := goitertools.Repeat(ctx, val, times)
 
+	defer cancel()
+	
 	got := make([]int, 0, times)
 	for i := 0; i < times; i++ {
 		select {

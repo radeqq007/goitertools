@@ -1,12 +1,19 @@
 package goitertools
 
-func Cycle[T any](items []T) <-chan T {
+import "context"
+
+func Cycle[T any](ctx context.Context, items []T) <-chan T {
 	ch := make(chan T)
 
 	go func() {
 		for {
 			for _, item := range items {
-				ch <- item
+				select {
+				case <-ctx.Done():
+					close(ch)
+					return
+				case ch <- item:
+				}
 			}
 		}
 	}()
@@ -14,30 +21,44 @@ func Cycle[T any](items []T) <-chan T {
 	return ch
 }
 
-func Count(start, step int) <-chan int {
+func Count(ctx context.Context, start, step int) <-chan int {
 	ch := make(chan int)
 
 	go func() {
 		i := start
 		for {
-			ch <- i
-			i += step
+			select {
+			case <-ctx.Done():
+				close(ch)
+				return
+			case ch <- i:
+				i += step
+			}
 		}
 	}()
 
 	return ch
 }
 
-func Repeat[T any](value T, times int) <-chan T {
+func Repeat[T any](ctx context.Context, value T, times int) <-chan T {
 	ch := make(chan T)
 	go func() {
 		if times == -1 {
 			for {
-				ch <- value
+				select {
+				case <-ctx.Done():
+					close(ch)
+					return
+				case ch <- value:
+				}
 			}
 		} else {
 			for i := 0; i < times; i++ {
-				ch <- value
+				select {
+				case <-ctx.Done():
+					return
+				case ch <- value:
+				}
 			}
 			close(ch)
 		}
