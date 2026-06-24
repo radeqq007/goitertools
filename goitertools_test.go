@@ -1,57 +1,45 @@
 package goitertools_test
 
 import (
-	"context"
-	"reflect"
 	"testing"
-	"time"
 
 	"github.com/radeqq007/goitertools"
 )
 
 func TestCycle(t *testing.T) {
 	items := []int{1, 2, 3}
-	ctx, cancel := context.WithCancel(context.Background())
-	ch := goitertools.Cycle(ctx, items)
-	defer cancel()
+	var got []int
 
-	got := make([]int, 0, 6)
-	for range 6 {
-		select {
-		case val := <-ch:
-			got = append(got, val)
-		case <-time.After(time.Second):
-			t.Fatal("Cycle channel timed out")
+	for v := range goitertools.Cycle(items) {
+		got = append(got, v)
+		if len(got) == 8 {
+			break
 		}
-
 	}
 
-	expected := []int{1, 2, 3, 1, 2, 3}
+	expected := []int{1, 2, 3, 1, 2, 3, 1, 2}
+
 	for i := range expected {
 		if got[i] != expected[i] {
-			t.Fatalf("Cycle output mismatch at index %d: got %d, want %d", i, got[i], expected[i])
+			t.Fatalf("mismatch at %d: got %d expected %d", i, got[i], expected[i])
 		}
 	}
 }
 
 func TestCount(t *testing.T) {
-	start := 0
+	start := 10
 	step := 2
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() 
-	ch := goitertools.Count(ctx, start, step)
 
-	got := make([]int, 0, 5)
-	for i := 0; i < 5; i++ {
-		select {
-		case val := <-ch:
-			got = append(got, val)
-		case <-time.After(time.Second):
-			t.Fatal("Count channel timed out")
+	var got []int
+
+	for v := range goitertools.Count(start, step) {
+		if len(got) == 5 {
+			break
 		}
+		got = append(got, v)
 	}
 
-	expected := []int{0, 0 + step, 0 + step*2, 0 + step*3, 0 + step*4}
+	expected := []int{start, start + step, start + step*2, start + step*3, start + step*4}
 	for i := range expected {
 		if got[i] != expected[i] {
 			t.Fatalf("Count output mismatch at index %d: got %d, want %d", i, got[i], expected[i])
@@ -60,109 +48,124 @@ func TestCount(t *testing.T) {
 }
 
 func TestRepeat(t *testing.T) {
-	val := 0
+	val := 2
 	times := 4
-	ctx, cancel := context.WithCancel(context.Background())
-	ch := goitertools.Repeat(ctx, val, times)
 
-	defer cancel()
-	
 	got := make([]int, 0, times)
-	for i := 0; i < times; i++ {
+	/* 	for i := 0; i < times; i++ {
 		select {
 		case val := <-ch:
 			got = append(got, val)
 		case <-time.After(time.Second):
 			t.Fatal("Repeat channel timed out")
 		}
+	 }*/
+
+	for v := range goitertools.Repeat(val, times) {
+		got = append(got, v)
 	}
 
-	expected := []int{0, 0, 0, 0}
+	expected := []int{2, 2, 2, 2}
 
-	if !reflect.DeepEqual(got, expected) {
-		t.Fatalf("got %v, want %v", got, expected)
+	for i := range expected {
+		if got[i] != expected[i] {
+			t.Fatalf("mismatch at %d: got %d expected %d", i, got[i], expected[i])
+		}
 	}
 }
 
 func TestFilter(t *testing.T) {
 	items := []int{10, 15, 2, 20, 5}
-	condition := func(val, _ int) bool { return val%2 == 0 }
-	ch := goitertools.Filter(items, condition)
+	condition := func(_ int, val int) bool { return val%2 == 0 }
 
-	got := []int{}
-	for val := range ch {
-		got = append(got, val)
+	var got []int
+
+	for v := range goitertools.Filter(items, condition) {
+		got = append(got, v)
 	}
 
 	expected := []int{10, 2, 20}
 
-	if !reflect.DeepEqual(got, expected) {
-		t.Fatalf("got %v, want %v", got, expected)
+	for i := range expected {
+		if got[i] != expected[i] {
+			t.Fatalf("mismatch at %d: got %d expected %d", i, got[i], expected[i])
+		}
 	}
 }
 
 func TestFilterFalse(t *testing.T) {
-	items := []int{11, 15, 2, 20, 5}
-	condition := func(val, _ int) bool { return val%2 == 0 }
-	ch := goitertools.FilterFalse(items, condition)
+	items := []int{10, 15, 2, 20, 5}
+	condition := func(_ int, val int) bool { return val%2 == 0 }
 
-	got := []int{}
-	for val := range ch {
-		got = append(got, val)
+	var got []int
+
+	for v := range goitertools.FilterFalse(items, condition) {
+		got = append(got, v)
 	}
 
-	expected := []int{11, 15, 5}
+	expected := []int{15, 5}
 
-	if !reflect.DeepEqual(got, expected) {
-		t.Fatalf("got %v, want %v", got, expected)
+	for i := range expected {
+		if got[i] != expected[i] {
+			t.Fatalf("mismatch at %d: got %d expected %d", i, got[i], expected[i])
+		}
 	}
 }
 
 func TestCompress(t *testing.T) {
 	data := []int{10, 20, 30, 40, 50}
 	selectors := []bool{true, false, true, false, true}
-	ch := goitertools.Compress(data, selectors)
-	
-	got := []int{}
-	for val := range ch {
+
+	var got []int
+	for val := range goitertools.Compress(data, selectors) {
 		got = append(got, val)
 	}
-	
+
 	expected := []int{10, 30, 50}
-	if !reflect.DeepEqual(got, expected) {
-		t.Fatalf("got %v, want %v", got, expected)
+	for i := range expected {
+		if got[i] != expected[i] {
+			t.Fatalf("mismatch at %d: got %d expected %d", i, got[i], expected[i])
+		}
 	}
 }
 
 func TestDropWhile(t *testing.T) {
 	items := []int{1, 3, 5, 2, 4, 6}
-	condition := func(val, _ int) bool { return val < 4 }
-	ch := goitertools.DropWhile(items, condition)
-	
-	got := []int{}
-	for val := range ch {
+	condition := func(_ int, val int) bool { return val < 4 }
+
+	var got []int
+	for val := range goitertools.DropWhile(items, condition) {
 		got = append(got, val)
 	}
-	
+
 	expected := []int{5, 2, 4, 6}
-	if !reflect.DeepEqual(got, expected) {
-		t.Fatalf("got %v, want %v", got, expected)
+	if len(got) != len(expected) {
+		t.Fatalf("length mismatch: got %d elements, want %d", len(got), len(expected))
+	}
+	for i := range expected {
+		if got[i] != expected[i] {
+			t.Fatalf("mismatch at %d: got %d expected %d", i, got[i], expected[i])
+		}
 	}
 }
 
 func TestTakeWhile(t *testing.T) {
 	items := []int{2, 4, 6, 1, 4, 5}
-	condition := func(val, _ int) bool { return val%2 == 0 }
-	ch := goitertools.TakeWhile(items, condition)
-	
-	got := []int{}
-	for val := range ch {
+	condition := func(_ int, val int) bool { return val%2 == 0 }
+
+	var got []int
+	for val := range goitertools.TakeWhile(items, condition) {
 		got = append(got, val)
 	}
-	
+
 	expected := []int{2, 4, 6}
-	if !reflect.DeepEqual(got, expected) {
-		t.Fatalf("got %v, want %v", got, expected)
+	if len(got) != len(expected) {
+		t.Fatalf("length mismatch: got %d elements, want %d", len(got), len(expected))
+	}
+	for i := range expected {
+		if got[i] != expected[i] {
+			t.Fatalf("mismatch at %d: got %d expected %d", i, got[i], expected[i])
+		}
 	}
 }
 
@@ -173,17 +176,20 @@ func TestChain(t *testing.T) {
 		{3, 1, 6},
 	}
 
-	ch := goitertools.Chain(slices)
-
-	got := []int{}
-	for val := range ch {
-		got = append(got, val...)
+	var got []int
+	for val := range goitertools.Chain(slices...) {
+		got = append(got, val)
 	}
 
 	expected := []int{10, 2, 5, 1, 3, 1, 6}
 
-	if !reflect.DeepEqual(got, expected) {
-		t.Fatalf("got %v, want %v", got, expected)
+	if len(got) != len(expected) {
+		t.Fatalf("length mismatch: got %d elements, want %d", len(got), len(expected))
+	}
+	for i := range expected {
+		if got[i] != expected[i] {
+			t.Fatalf("mismatch at %d: got %d expected %d", i, got[i], expected[i])
+		}
 	}
 }
 

@@ -1,166 +1,122 @@
 package goitertools
 
-import "context"
+import "iter"
 
-func Cycle[T any](ctx context.Context, items []T) <-chan T {
-	ch := make(chan T)
+func Cycle[T any](items []T) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		if len(items) == 0 {
+			return
+		}
 
-	go func() {
 		for {
 			for _, item := range items {
-				select {
-				case <-ctx.Done():
-					close(ch)
+				if !yield(item) {
 					return
-				case ch <- item:
 				}
 			}
 		}
-	}()
-
-	return ch
+	}
 }
 
-func Count(ctx context.Context, start, step int) <-chan int {
-	ch := make(chan int)
-
-	go func() {
-		i := start
+func Count(start, step int) iter.Seq[int] {
+	return func(yield func(int) bool) {
+		cur := start
 		for {
-			select {
-			case <-ctx.Done():
-				close(ch)
+			if !yield(cur) {
 				return
-			case ch <- i:
-				i += step
 			}
-		}
-	}()
 
-	return ch
+			cur += step
+		}
+	}
 }
 
-func Repeat[T any](ctx context.Context, value T, times int) <-chan T {
-	ch := make(chan T)
-	go func() {
-		if times == -1 {
-			for {
-				select {
-				case <-ctx.Done():
-					close(ch)
+func Repeat[T any](value T, times int) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for range times {
+			if !yield(value) {
+				return
+			}
+		}
+	}
+}
+
+func Filter[T any](items []T, condition func(int, T) bool) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for i, v := range items {
+			if condition(i, v) {
+				if !yield(v) {
 					return
-				case ch <- value:
 				}
 			}
-		} else {
-			for i := 0; i < times; i++ {
-				select {
-				case <-ctx.Done():
+		}
+	}
+}
+
+func FilterFalse[T any](items []T, condition func(int, T) bool) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for i, v := range items {
+			if !condition(i, v) {
+				if !yield(v) {
 					return
-				case ch <- value:
 				}
 			}
-			close(ch)
 		}
-	}()
-
-	return ch
+	}
 }
 
-func Filter[T any](items []T, condition func(T, int) bool) <-chan T {
-	ch := make(chan T)
-	go func() {
-		defer close(ch)
-
-		for i, val := range items {
-			if condition(val, i) {
-				ch <- val
-			}
-		}
-	}()
-	return ch
-}
-
-func FilterFalse[T any](items []T, condition func(T, int) bool) <-chan T {
-	ch := make(chan T)
-	go func() {
-		defer close(ch)
-
-		for i, val := range items {
-			if !condition(val, i) {
-				ch <- val
-			}
-		}
-	}()
-	return ch
-}
-
-func Compress[T any](items []T, selectors []bool) <-chan T {
-	ch := make(chan T)
-	go func() {
-		defer close(ch)
-		
+func Compress[T any](items []T, selectors []bool) iter.Seq[T] {
+	return func(yield func(T) bool) {
 		minLen := len(items)
-		if len(selectors) < minLen {
-			minLen = len(selectors)
-		}
-		
-		for i := 0; i < minLen; i++ {
+		minLen = min(minLen, len(selectors))
+
+		for i := range minLen {
 			if selectors[i] {
-				ch <- items[i]
+				if !yield(items[i]) {
+					return
+				}
 			}
 		}
-	}()
-	return ch
+	}
 }
 
-func DropWhile[T any](items []T, condition func(T, int) bool) <-chan T {
-	ch := make(chan T)
-	go func() {
-		defer close(ch)
-
+func DropWhile[T any](items []T, condition func(int, T) bool) iter.Seq[T] {
+	return func(yield func(T) bool) {
 		dropping := true
 		for i, val := range items {
-			if dropping && condition(val, i) {
+			if dropping && condition(i, val) {
 				continue
-			} else {
-				dropping = false
-				ch <- val
+			}
+			dropping = false
+			if !yield(val) {
+				return
 			}
 		}
-	}()
-
-	return ch
+	}
 }
 
-func TakeWhile[T any](items []T, condition func(T, int) bool) <-chan T {
-	ch := make(chan T)
-	go func() {
-		defer close(ch)
-		
+func TakeWhile[T any](items []T, condition func(int, T) bool) iter.Seq[T] {
+	return func(yield func(T) bool) {
 		for i, val := range items {
-			if condition(val, i) {
-				ch <- val
+			if condition(i, val) {
+				if !yield(val) {
+					return
+				}
 			} else {
 				break
 			}
 		}
-	}()
-	return ch
+	}
 }
 
-func Chain[T any](slices ...[]T) <-chan T {
-	ch := make(chan T)
-
-	go func() {
-		defer close(ch)
+func Chain[T any](slices ...[]T) iter.Seq[T] {
+	return func(yield func(T) bool) {
 		for _, slice := range slices {
 			for _, val := range slice {
-				ch <- val
+				if !yield(val) {
+					return
+				}
 			}
 		}
-	}()
-
-	return ch
+	}
 }
-
