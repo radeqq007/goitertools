@@ -1,7 +1,11 @@
+// Package goitertools provides a collection iterator utilities 
+// inspired by Python's itertools library
 package goitertools
 
 import "iter"
 
+// Cycle returns an infinite iterator that repeatedly yields elements from the slice.
+// It stops immediately if items is empty.
 func Cycle[T any](items []T) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		if len(items) == 0 {
@@ -18,6 +22,8 @@ func Cycle[T any](items []T) iter.Seq[T] {
 	}
 }
 
+// Count returns an infinite iterator that yields evenly spaced values starting.
+// from the 'start', incrementing by 'step' on each iteration.
 func Count(start, step int) iter.Seq[int] {
 	return func(yield func(int) bool) {
 		cur := start
@@ -31,6 +37,8 @@ func Count(start, step int) iter.Seq[int] {
 	}
 }
 
+// Repeat returns an iterator that yields the specified value a fixed number of times.
+// If 'times' is less than 1, the iterator yields nothing.
 func Repeat[T any](value T, times int) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for range times {
@@ -41,6 +49,8 @@ func Repeat[T any](value T, times int) iter.Seq[T] {
 	}
 }
 
+// Filter returns an iterator that yields elements from the slice for which the condition function returns true.
+// The condition function receives both the index and the value of the element.
 func Filter[T any](items []T, condition func(int, T) bool) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for i, v := range items {
@@ -53,6 +63,8 @@ func Filter[T any](items []T, condition func(int, T) bool) iter.Seq[T] {
 	}
 }
 
+// FilterFalse returns an iterator that yields elements from the slice for which the condition function returns false.
+// The condition function receives both the index and the value of the element.
 func FilterFalse[T any](items []T, condition func(int, T) bool) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for i, v := range items {
@@ -65,6 +77,8 @@ func FilterFalse[T any](items []T, condition func(int, T) bool) iter.Seq[T] {
 	}
 }
 
+// Compress returns an iterator that filters elements returning only those that have a corresponding true value in the selectors.
+// Iteration stops when either the 'items' or 'selectors' slice is exhausted.
 func Compress[T any](items []T, selectors []bool) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		minLen := len(items)
@@ -80,6 +94,8 @@ func Compress[T any](items []T, selectors []bool) iter.Seq[T] {
 	}
 }
 
+// DropWhile returns an iterator that skips elements as long as the condition function returns true.
+// Once the condition returns false, the and all remaining elements are yielded without further evaluation of the condition.
 func DropWhile[T any](items []T, condition func(int, T) bool) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		dropping := true
@@ -95,6 +111,8 @@ func DropWhile[T any](items []T, condition func(int, T) bool) iter.Seq[T] {
 	}
 }
 
+// TakeWhile returns an iterator that yields elements from the slice as long as the condition function returns true.
+// It terminates immediately once the condition returns false.
 func TakeWhile[T any](items []T, condition func(int, T) bool) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for i, val := range items {
@@ -109,6 +127,8 @@ func TakeWhile[T any](items []T, condition func(int, T) bool) iter.Seq[T] {
 	}
 }
 
+// Chain returns an iterator that treats consecutive slices as a single continuous sequence.
+// It yields all elements from the first slice, then the second, and so on, until all provided slices are exhausted.
 func Chain[T any](slices ...[]T) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for _, slice := range slices {
